@@ -1,0 +1,171 @@
+{
+    "name": "loadandtransform",
+    "properties": {
+        "activities": [
+            {
+                "name": "onprem to cloud",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "ParquetSink",
+                        "storeSettings": {
+                            "type": "AzureBlobStorageWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "ParquetWriteSettings"
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "AzureSqlTable1",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "Parquet1",
+                        "type": "DatasetReference"
+                    }
+                ]
+            },
+            {
+                "name": "transformation logic",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "onprem to cloud",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Users/sandeeprajcse@gmail.com/tranformation_code"
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureDatabricksTransform",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "failure",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "onprem to cloud",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": "https://prod-26.northcentralus.logic.azure.com:443/workflows/3c5926e3ba374392add9a97357b77759/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=Gu7_A6TobhBYw-IRwz7tiWSjYKoDkq1HhU56O7YYfYk",
+                    "body": {
+                        "status": "@activity('onprem to cloud').output.runStatus",
+                        "message": "Pipeline execution completed."
+                    }
+                }
+            },
+            {
+                "name": "done",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "transformation logic",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": "https://prod-26.northcentralus.logic.azure.com:443/workflows/3c5926e3ba374392add9a97357b77759/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=Gu7_A6TobhBYw-IRwz7tiWSjYKoDkq1HhU56O7YYfYk",
+                    "body": {
+                        "status": "@activity('transformation logic').output.runStatus",
+                        "message": "Pipeline execution completed."
+                    }
+                }
+            },
+            {
+                "name": "not done",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "transformation logic",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": "https://prod-26.northcentralus.logic.azure.com:443/workflows/3c5926e3ba374392add9a97357b77759/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=Gu7_A6TobhBYw-IRwz7tiWSjYKoDkq1HhU56O7YYfYk",
+                    "body": {
+                        "status": "@activity('transformation logic').output.runStatus",
+                        "message": "Pipeline execution completed."
+                    }
+                }
+            }
+        ],
+        "annotations": [],
+        "lastPublishTime": "2025-02-16T15:29:51Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

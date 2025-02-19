@@ -1,0 +1,21 @@
+{
+    "name": "AzureSqlDatabaseonprem",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
+    "properties": {
+        "annotations": [],
+        "type": "AzureSqlDatabase",
+        "typeProperties": {
+            "server": "localhost",
+            "database": "sales",
+            "encrypt": "mandatory",
+            "trustServerCertificate": true,
+            "authenticationType": "SQL",
+            "userName": "sa",
+            "encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI0NzhmMDA1YS1jOGQyLTQyNjEtOWVmMC0yYTE0ZmU1NzhlODYiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+        },
+        "connectVia": {
+            "referenceName": "integrationRuntimeformigrate",
+            "type": "IntegrationRuntimeReference"
+        }
+    }
+}
